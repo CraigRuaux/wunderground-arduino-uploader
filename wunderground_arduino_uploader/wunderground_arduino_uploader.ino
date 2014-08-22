@@ -143,7 +143,7 @@ if ( Udp.parsePacket() ) {
 
     // print the hour, minute and second:
     Serial.print("The PDT time is ");       // UTC is the time at Greenwich Meridian (GMT), PDT is GMT -7hrs
-    Serial.print((epoch  % 86400L) / 3600 + GMT_offset); // print the hour (86400 equals secs per day), adjust for GMT
+    Serial.print((epoch  % 86400L) / 3600 + GMT_offset); // print the hour (86400 equals secs per day), adjust for GMT offset in other time zones
     Serial.print(':');  
     if ( ((epoch % 3600) / 60) < 10 ) {
       // In the first 10 minutes of each hour, we'll want a leading '0'
