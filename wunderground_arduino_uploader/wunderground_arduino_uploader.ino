@@ -1,22 +1,7 @@
-//Assembled from the original WeatherBoard code written by Mike Grusin
-// www.sparkfun.com
-
-// Compile and load onto SparkFun USB Weather Board V3 using Arduino development envrionment,
-// Download from www.arduino.cc
-
-// Uses the SHT15x library by Jonathan Oxer et.al.
-// Supplied with this software distribution, or download from https://github.com/practicalarduino/SHT1x.
-// Place in your Arduino sketchbook under "libraries/SHT1x"
-
-// Uses the SFE_BMP085 library by SparkFun with math from http://wmrx00.sourceforge.net/Arduino/BMP085-Calcs.pdf
-// Supplied with this distribution; place in your Arduino sketchbook under "libraries/SFE_BMP085"
-
-// License:
-// This code is free to use, change, improve, even sell!  All we ask for is two things:
-// 1. That you give SparkFun credit for the original code,
-// 2. If you sell or give it away, you do so under the same license so others can do the same thing.
-// More at http://creativecommons.org/licenses/by-sa/3.0/
-
+//Receives data from the Sparkfun USB Weather Board V3, calculates variables needed for WeatherUnderground uploading and uploads via http put.
+//Wunderground upload and variables code modified from the original WIMP Weatherboard project by Nathan Seidle, whcih was itself based on Weatherboard
+//code by Mike Grusin.
+//https://learn.sparkfun.com/tutorials/weather-station-wirelessly-connected-to-wunderground
 
 //Serial reading and parsing code based on code by JHaskell - http://jhaskellsblog.blogspot.com
 //
