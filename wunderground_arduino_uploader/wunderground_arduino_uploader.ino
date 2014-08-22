@@ -46,6 +46,9 @@ IPAddress timeServer(132,163,4,101); // time-a.timefreq.bldrdoc.gov NTP server
 const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
 byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
 int GMT_offset= -7;  //For Pacific Daylight Time. Need to add code to determine is PST or PDT
+byte hour; //hour of the day, to check for reset 
+byte minutes; //minute of the hour
+
 // A UDP instance to let us send and receive packets over UDP
 EthernetUDP Udp;
 
@@ -141,7 +144,7 @@ if ( Udp.parsePacket() ) {
     Serial.println(epoch);                              
 
 
-    // print the hour, minute and second:
+  /*  // print the hour, minute and second:
     Serial.print("The PDT time is ");       // UTC is the time at Greenwich Meridian (GMT), PDT is GMT -7hrs
     Serial.print((epoch  % 86400L) / 3600 + GMT_offset); // print the hour (86400 equals secs per day), adjust for GMT offset in other time zones
     Serial.print(':');  
@@ -156,7 +159,23 @@ if ( Udp.parsePacket() ) {
       Serial.print('0');
     }
     Serial.println(epoch %60); // print the second
-  }
+ */
+hour = ((epoch % 86400L)/3600 + GMT_offset); //what hour of the day is it?
+minutes = ((epoch %3600)/60);  // minute in the hour
+
+Serial.println("It is ");
+Serial.print(hour);
+Serial.print(":");
+Serial.print(minutes);
+Serial.println(" Hrs");
+
+if (hour == 24 && minutes == 1)
+{
+  Serial.println("It is midnight, time to reset");
+  Serial.println();
+  reset_counts();
+}
+ }
 
 
 
@@ -302,4 +321,21 @@ unsigned long sendNTPpacket(IPAddress& address)
   Udp.beginPacket(address, 123); //NTP requests are to port 123
   Udp.write(packetBuffer,NTP_PACKET_SIZE);
   Udp.endPacket();
+}
+
+//When the timeserver tells us it's midnight, reset the total amount of rain and gusts
+void reset_counts()
+{
+/*  dailyrainin = 0; //Reset daily amount of rain
+
+  windgustmph = 0; //Zero out this minute's gust
+  windgustdir = 0; //Zero out the gust direction
+
+  minutes = 0; //Reset minute tracker
+  seconds = 0;
+  lastSecond = millis();
+  
+  These are placeholders for WUnderground variables
+  
+*/  
 }
