@@ -8,7 +8,11 @@
 #include <Cosm.h>
 
 // MAC address forEthernet shield
+<<<<<<< HEAD
 byte mac[] = { YOUR MAC HERE };
+=======
+byte mac[] = { YOUR MAC ADDRESS HERE };
+>>>>>>> abe62735f12f06e9ecd909e5fa2cae1128ceed97
 
 // Cosm key 
 char cosmKey[] = "YOUR COSM KEY HERE";
