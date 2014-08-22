@@ -1,18 +1,42 @@
+//Assembled from the original WeatherBoard code written by Mike Grusin
+// www.sparkfun.com
+
+// Compile and load onto SparkFun USB Weather Board V3 using Arduino development envrionment,
+// Download from www.arduino.cc
+
+// Uses the SHT15x library by Jonathan Oxer et.al.
+// Supplied with this software distribution, or download from https://github.com/practicalarduino/SHT1x.
+// Place in your Arduino sketchbook under "libraries/SHT1x"
+
+// Uses the SFE_BMP085 library by SparkFun with math from http://wmrx00.sourceforge.net/Arduino/BMP085-Calcs.pdf
+// Supplied with this distribution; place in your Arduino sketchbook under "libraries/SFE_BMP085"
+
+// License:
+// This code is free to use, change, improve, even sell!  All we ask for is two things:
+// 1. That you give SparkFun credit for the original code,
+// 2. If you sell or give it away, you do so under the same license so others can do the same thing.
+// More at http://creativecommons.org/licenses/by-sa/3.0/
+
 
 //Serial reading and parsing code based on code by JHaskell - http://jhaskellsblog.blogspot.com
 //
+
+
+//UdpNtpTime code modified from the Arduino tutorial written by Michael Margolis/Tom Igoe - http://arduino.cc/en/Tutorial/UdpNtpClient
 
 #include <SPI.h>
 #include <Ethernet.h>
 #include <HttpClient.h>
 #include <Cosm.h>
+#include <EthernetUdp.h>
 
-// MAC address for Ethernet shield
-byte mac[] = { YOUR MAC HERE };
+
+// MAC address for Ethernet shield. This is a "dummy" or default MAC that should work, but check to see if your shield has one already assigned.
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
 
 // Cosm key 
-char cosmKey[] = "YOUR COSM KEY HERE";
+char cosmKey[] = "tQgt0uooKABjvUrfPLzm2KmO70WSAKxZSjNCM0NrdUJKQT0g";
 
 
 
@@ -27,10 +51,21 @@ int winddirection;
 float rainfall;
 float batt_power;
 
+//Some variables for the sanity checking code
 boolean report=false;
 float mbarcheck=990.0;
 
-// Define the strings for our datastream IDs
+//Defines for the Time check code. Uses Network time to check for midnight when resetting daily rain etc.
+unsigned int localPort = 8888;
+IPAddress timeServer(132,163,4,101); // time-a.timefreq.bldrdoc.gov NTP server
+const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
+byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
+int GMT_offset= -7;  //For Pacific Daylight Time. Need to add code to determine is PST or PDT
+// A UDP instance to let us send and receive packets over UDP
+EthernetUDP Udp;
+
+
+// Define the strings for our datastream IDs - Relates to COSM uploads
 char temp[] = "Temp";
 char humidity[]="Humidity";
 char dew_point[]="Dewpoint";
@@ -67,6 +102,7 @@ void setup() {
     Serial.println("Error getting IP address via DHCP, trying again...");
     delay(15000);
   }
+  Udp.begin(localPort);
 }
 
 void loop() {
@@ -93,6 +129,52 @@ void loop() {
   if (Serial.read()=='\n'){
   validate();
 
+sendNTPpacket(timeServer);  //check the time
+delay(1000);
+if ( Udp.parsePacket() ) {  
+    // We've received a packet, read the data from it
+    Udp.read(packetBuffer,NTP_PACKET_SIZE);  // read the packet into the buffer
+
+    //the timestamp starts at byte 40 of the received packet and is four bytes,
+    // or two words, long. First, esxtract the two words:
+
+    unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);  
+    // combine the four bytes (two words) into a long integer
+    // this is NTP time (seconds since Jan 1 1900):
+    unsigned long secsSince1900 = highWord << 16 | lowWord;  
+    Serial.print("Seconds since Jan 1 1900 = " );
+    Serial.println(secsSince1900);              
+
+    // now convert NTP time into everyday time:
+    Serial.print("Unix time = ");
+    // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+    const unsigned long seventyYears = 2208988800UL;    
+    // subtract seventy years:
+    unsigned long epoch = secsSince1900 - seventyYears;  
+    // print Unix time:
+    Serial.println(epoch);                              
+
+
+    // print the hour, minute and second:
+    Serial.print("The PDT time is ");       // UTC is the time at Greenwich Meridian (GMT), PDT is GMT -7hrs
+    Serial.print((epoch  % 86400L) / 3600 + GMT_offset); // print the hour (86400 equals secs per day), adjust for GMT
+    Serial.print(':');  
+    if ( ((epoch % 3600) / 60) < 10 ) {
+      // In the first 10 minutes of each hour, we'll want a leading '0'
+      Serial.print('0');
+    }
+    Serial.print((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
+    Serial.print(':');
+    if ( (epoch % 60) < 10 ) {
+      // In the first 10 seconds of each minute, we'll want a leading '0'
+      Serial.print('0');
+    }
+    Serial.println(epoch %60); // print the second
+  }
+
+
+
 if (report==true)  
   {
     uploadData(); //data to COSM
@@ -111,7 +193,7 @@ if (report==true)
   
 
   Serial.println();
-  delay(15000);
+  delay(14000);
    }
   }
  }
@@ -213,3 +295,26 @@ void zeroData()
        report= false;
 }
 
+// send an NTP request to the time server at the given address
+unsigned long sendNTPpacket(IPAddress& address)
+{
+  // set all bytes in the buffer to 0
+  memset(packetBuffer, 0, NTP_PACKET_SIZE);
+  // Initialize values needed to form NTP request
+  // (see URL above for details on the packets)
+  packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+  packetBuffer[1] = 0;     // Stratum, or type of clock
+  packetBuffer[2] = 6;     // Polling Interval
+  packetBuffer[3] = 0xEC;  // Peer Clock Precision
+  // 8 bytes of zero for Root Delay & Root Dispersion
+  packetBuffer[12]  = 49;
+  packetBuffer[13]  = 0x4E;
+  packetBuffer[14]  = 49;
+  packetBuffer[15]  = 52;
+
+  // all NTP fields have been given values, now
+  // you can send a packet requesting a timestamp:         
+  Udp.beginPacket(address, 123); //NTP requests are to port 123
+  Udp.write(packetBuffer,NTP_PACKET_SIZE);
+  Udp.endPacket();
+}
