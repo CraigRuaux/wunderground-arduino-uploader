@@ -16,14 +16,13 @@
 #include <EthernetUdp.h>
 
 
+ //use to configure the Xively and/or Wunderground settings, such as cosmKey
+
 // MAC address for Ethernet shield. This is a "dummy" or default MAC that should work, but check to see if your shield has one already assigned.
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
 
-// Cosm key 
-char cosmKey[] = "tQgt0uooKABjvUrfPLzm2KmO70WSAKxZSjNCM0NrdUJKQT0g";
-
-
+const char cosmKey[]= "tQgt0uooKABjvUrfPLzm2KmO70WSAKxZSjNCM0NrdUJKQT0g";
 
 //Define Sensor Values
 float Temp;
