@@ -45,10 +45,11 @@ unsigned int localPort = 8888;
 IPAddress timeServer(132,163,4,101); // time-a.timefreq.bldrdoc.gov NTP server
 const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
 byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
-int GMT_offset= -7;  //For Pacific Daylight Time. Need to add code to determine is PST or PDT
+
+const unsigned long GMT_offset = 25200;  //For Pacific Daylight Time. 7 hrs x 60 minutes x 60 seconds. Need to add code to determine is PST or PDT
 byte hour; //hour of the day, to check for reset 
 byte minutes; //minute of the hour
-
+byte seconds; //second in the minute
 // A UDP instance to let us send and receive packets over UDP
 EthernetUDP Udp;
 
@@ -131,25 +132,25 @@ if ( Udp.parsePacket() ) {
     // combine the four bytes (two words) into a long integer
     // this is NTP time (seconds since Jan 1 1900):
     unsigned long secsSince1900 = highWord << 16 | lowWord;  
-    Serial.print("Seconds since Jan 1 1900 = " );
-    Serial.println(secsSince1900);              
+ //  Serial.print("Seconds since Jan 1 1900 = " );
+  //  Serial.println(secsSince1900);              
 
     // now convert NTP time into everyday time:
-    Serial.print("Unix time = ");
+  // Serial.print("Unix time = ");
     // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
     const unsigned long seventyYears = 2208988800UL;    
     // subtract seventy years:
     unsigned long epoch = secsSince1900 - seventyYears;  
     // print Unix time:
-    Serial.println(epoch);                              
+//   Serial.println(epoch);                              
 
-
-  /*  // print the hour, minute and second:
-    Serial.print("The PDT time is ");       // UTC is the time at Greenwich Meridian (GMT), PDT is GMT -7hrs
-    Serial.print((epoch  % 86400L) / 3600 + GMT_offset); // print the hour (86400 equals secs per day), adjust for GMT offset in other time zones
+/*
+   // print the hour, minute and second:
+    Serial.print("The GMT time is ");       // UTC is the time at Greenwich Meridian (GMT), PDT is GMT -7hrs
+    Serial.print((epoch % 86400L) / 3600); // print the hour (86400 equals secs per day), adjust for GMT offset in other time zones
     Serial.print(':');  
     if ( ((epoch % 3600) / 60) < 10 ) {
-      // In the first 10 minutes of each hour, we'll want a leading '0'
+       In the first 10 minutes of each hour, we'll want a leading '0'
       Serial.print('0');
     }
     Serial.print((epoch  % 3600) / 60); // print the minute (3600 equals secs per minute)
@@ -159,15 +160,17 @@ if ( Udp.parsePacket() ) {
       Serial.print('0');
     }
     Serial.println(epoch %60); // print the second
- */
-hour = ((epoch % 86400L)/3600 + GMT_offset); //what hour of the day is it?
+*/
+hour = (((epoch-GMT_offset) % 86400L)/ 3600 ); //what hour of the day is it? GMT offset of 25200 seconds for PDT (7 hours behind)
 minutes = ((epoch %3600)/60);  // minute in the hour
-
-Serial.println("It is ");
+seconds = (epoch %60);// seconds in the minute
+Serial.print("It is ");
 Serial.print(hour);
 Serial.print(":");
 Serial.print(minutes);
-Serial.println(" Hrs");
+Serial.print(":");
+Serial.print(seconds);
+Serial.println(" Hrs PDT");
 
 if (hour == 24 && minutes == 1)
 {
