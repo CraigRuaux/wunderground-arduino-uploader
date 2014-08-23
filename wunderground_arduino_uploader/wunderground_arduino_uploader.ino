@@ -14,7 +14,7 @@
 #include <HttpClient.h>
 #include <Cosm.h>
 #include <EthernetUdp.h>
-#include <cosmkey.h>
+
 
  //use to configure the Xively and/or Wunderground settings, such as cosmKey
 
