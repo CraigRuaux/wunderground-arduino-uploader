@@ -19,8 +19,6 @@
 // MAC address for Ethernet shield. This is a "dummy" or default MAC that should work, but check to see if your shield has one already assigned.
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
-const char cosmKey[]= "tQgt0uooKABjvUrfPLzm2KmO70WSAKxZSjNCM0NrdUJKQT0g"; //replace with a feed key for COSM
-
 //Define Sensor Values
 float Temp;
 int Humidity;
@@ -31,6 +29,56 @@ float windspeed;
 int winddirection;
 float rainfall;
 float batt_power;
+
+//Define variables for Weather Underground (from WIMP station code)
+//Global Variables
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+long lastSecond; //The millis counter to see when a second rolls by
+byte seconds; //When it hits 60, increase the current minute
+byte seconds_2m; //Keeps track of the "wind speed/dir avg" over last 2 minutes array of data
+byte minutes; //Keeps track of where we are in various arrays of data
+byte minutes_10m; //Keeps track of where we are in wind gust/dir over last 10 minutes array of data
+
+long lastWindCheck = 0;
+volatile long lastWindIRQ = 0;
+volatile byte windClicks = 0;
+
+//We need to keep track of the following variables:
+//Wind speed/dir each update (no storage)
+//Wind gust/dir over the day (no storage)
+//Wind speed/dir, avg over 2 minutes (store 1 per second)
+//Wind gust/dir over last 10 minutes (store 1 per minute)
+//Rain over the past hour (store 1 per minute)
+//Total rain over date (store one per day)
+
+byte windspdavg[120]; //120 bytes to keep track of 2 minute average
+int winddiravg[120]; //120 ints to keep track of 2 minute average
+float windgust_10m[10]; //10 floats to keep track of 10 minute max
+int windgustdirection_10m[10]; //10 ints to keep track of 10 minute max
+volatile float rainHour[60]; //60 floating numbers to keep track of 60 minutes of rain
+
+//These are all the weather values that wunderground expects:
+int winddir; // [0-360 instantaneous wind direction]
+float windspeedmph; // [mph instantaneous wind speed]
+float windgustmph; // [mph current wind gust, using software specific time period]
+int windgustdir; // [0-360 using software specific time period]
+float windspdmph_avg2m; // [mph 2 minute average wind speed mph]
+int winddir_avg2m; // [0-360 2 minute average wind direction]
+float windgustmph_10m; // [mph past 10 minutes wind gust mph ]
+int windgustdir_10m; // [0-360 past 10 minutes wind gust direction]
+float humidity; // [%]
+float tempf; // [temperature F]
+float rainin; // [rain inches over the past hour)] -- the accumulated rainfall in the past 60 min
+volatile float dailyrainin; // [rain inches so far today in local time]
+float baromin = 30.03;// [barom in] - It's hard to calculate baromin locally, do this in the agent
+float pressure;
+
+
+
+
+// volatiles are subject to modification by IRQs
+volatile unsigned long raintime, rainlast, raininterval, rain;
+//-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 //Some variables for the sanity checking code
 boolean report=false;
@@ -44,12 +92,12 @@ byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing pack
 
 const unsigned long GMT_offset = 25200;  //For Pacific Daylight Time. 7 hrs x 60 minutes x 60 seconds. Need to add code to determine is PST or PDT
 byte hour; //hour of the day, to check for reset 
-byte minutes; //minute of the hour
-byte seconds; //second in the minute
+//byte minutes; //minute of the hour
+//byte seconds; //second in the minute
 // A UDP instance to let us send and receive packets over UDP
 EthernetUDP Udp;
 
-
+/*
 // Define the strings for our datastream IDs - Relates to COSM uploads
 char temp[] = "Temp";
 char humidity[]="Humidity";
@@ -70,11 +118,11 @@ CosmDatastream datastreams[] = {
  
 };
 // Finally, wrap the datastreams into a feed
-CosmFeed feed(84186, datastreams, 6 /* number of datastreams */);
+CosmFeed feed(84186, datastreams, 6 number of datastreams );
 
 EthernetClient client;
 CosmClient cosmclient(client);
-
+*/
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
@@ -180,8 +228,10 @@ if (hour == 24 && minutes == 1)
 
 if (report==true)  
   {
-    uploadData(); //data to COSM
+   // uploadData(); //data to COSM
+    wunderground(); //HTTP Put to wunderground.
     localReport();//data to local display
+    
   }
   else
   {
@@ -206,7 +256,7 @@ void printComma() // we do this a lot, it saves two bytes each time we call it
 }
 
 
-void uploadData()  // actually uploading to COSM
+/*void uploadData()  // actually uploading to COSM
 {
   datastreams[0].setFloat(Temp);
   datastreams[1].setFloat(Humidity);
@@ -221,7 +271,7 @@ Serial.println("Uploading it to Cosm");
   Serial.println(ret);
 
 }
-
+*/
 void validate()  //sanity checking the data
 {
   Serial.println("Validating Data Payload");
@@ -318,5 +368,16 @@ unsigned long sendNTPpacket(IPAddress& address)
 //When the timeserver tells us it's midnight, reset the total amount of rain and gusts
 void reset_counts()
 {
+/*  dailyrainin = 0; //Reset daily amount of rain
 
+  windgustmph = 0; //Zero out this minute's gust
+  windgustdir = 0; //Zero out the gust direction
+
+  minutes = 0; //Reset minute tracker
+  seconds = 0;
+  lastSecond = millis();
+  
+  These are placeholders for WUnderground variables
+  
+*/  
 }
