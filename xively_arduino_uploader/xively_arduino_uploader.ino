@@ -318,16 +318,5 @@ unsigned long sendNTPpacket(IPAddress& address)
 //When the timeserver tells us it's midnight, reset the total amount of rain and gusts
 void reset_counts()
 {
-/*  dailyrainin = 0; //Reset daily amount of rain
 
-  windgustmph = 0; //Zero out this minute's gust
-  windgustdir = 0; //Zero out the gust direction
-
-  minutes = 0; //Reset minute tracker
-  seconds = 0;
-  lastSecond = millis();
-  
-  These are placeholders for WUnderground variables
-  
-*/  
 }
