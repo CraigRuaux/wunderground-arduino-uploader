@@ -49,36 +49,11 @@ byte seconds; //second in the minute
 EthernetUDP Udp;
 
 
-// Define the strings for our datastream IDs - Relates to COSM uploads
-char temp[] = "Temp";
-char humidity[]="Humidity";
-char dew_point[]="Dewpoint";
-char pressure[]="Pressure";
-char wind_speed[]="windspeed";
-char wind_direction[]="Wind_Direction";
-
-const int bufferSize = 140;
-char bufferValue[bufferSize]; // enough space to store the string we're going to send
-CosmDatastream datastreams[] = {
-  CosmDatastream(temp, strlen(temp), DATASTREAM_FLOAT),
-  CosmDatastream(humidity, strlen(humidity), DATASTREAM_FLOAT),
-  CosmDatastream(dew_point, strlen(dew_point), DATASTREAM_FLOAT),
-  CosmDatastream(pressure, strlen(pressure), DATASTREAM_FLOAT),
-  CosmDatastream(wind_speed, strlen(wind_speed), DATASTREAM_FLOAT),
-  CosmDatastream(wind_direction, strlen(wind_direction), DATASTREAM_FLOAT),
- 
-};
-// Finally, wrap the datastreams into a feed
-CosmFeed feed(84186, datastreams, 6 /* number of datastreams */);
-
-EthernetClient client;
-CosmClient cosmclient(client);
-
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   
-  Serial.println("Starting multiple datastream upload to Cosm...");
+  Serial.println("Starting data upload to Weather Underground");
   Serial.println();
 
   while (Ethernet.begin(mac) != 1)
@@ -167,11 +142,11 @@ Serial.print(":");
 Serial.print(seconds);
 Serial.println(" Hrs PDT");
 
-if (hour == 24 && minutes == 1)
+if (hour == 24 && minutes == 1 && seconds < 20)
 {
   Serial.println("It is midnight, time to reset");
   Serial.println();
-  reset_counts();
+  Serial.println("@"); //This is the sensor board reset code
 }
  }
 
@@ -205,19 +180,9 @@ void printComma() // we do this a lot, it saves two bytes each time we call it
 }
 
 
-void uploadData()  // actually uploading to COSM
+void uploadData()  // actually uploading to Weather Underground
 {
-  datastreams[0].setFloat(Temp);
-  datastreams[1].setFloat(Humidity);
-  datastreams[2].setFloat(dewpoint);
-  datastreams[3].setFloat(mbar);
-  datastreams[4].setFloat(windspeed);
-  datastreams[5].setFloat(winddirection);
-
-Serial.println("Uploading it to Cosm");
-  int ret = cosmclient.put(feed, cosmKey);
-  Serial.print("cosmclient.put returned ");
-  Serial.println(ret);
+ 
 
 }
 
