@@ -1,5 +1,5 @@
 //Receives data from the Sparkfun USB Weather Board V3, calculates variables needed for WeatherUnderground uploading and uploads via http put.
-//Wunderground upload and variables code modified from the original WIMP Weatherboard project by Nathan Seidle, which was itself based on Weatherboard
+//Wunderground upload and variables code modified from the original WIMP Weatherboard project by Nathan Seidle, whcih was itself based on Weatherboard
 //code by Mike Grusin.
 //https://learn.sparkfun.com/tutorials/weather-station-wirelessly-connected-to-wunderground
 
@@ -12,13 +12,14 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <HttpClient.h>
+#include <Cosm.h>
 #include <EthernetUdp.h>
 
 
 // MAC address for Ethernet shield. This is a "dummy" or default MAC that should work, but check to see if your shield has one already assigned.
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
-const char WunderStation[]= "KCORVA39"; //Wunderground Station ID, replace with your own value
+const char cosmKey[]= "tQgt0uooKABjvUrfPLzm2KmO70WSAKxZSjNCM0NrdUJKQT0g"; //replace with a feed key for COSM
 
 //Define Sensor Values
 float Temp;
