@@ -1,10 +1,11 @@
-//Receives data from the Sparkfun USB Weather Board V3, calculates variables needed for WeatherUnderground uploading and uploads via http put.
+//Receives data from the Sparkfun USB Weather Board V3 and uploads via http put using the HttpClient library.
 //Wunderground upload and variables code modified from the original WIMP Weatherboard project by Nathan Seidle, which was itself based on Weatherboard
 //code by Mike Grusin.
 //https://learn.sparkfun.com/tutorials/weather-station-wirelessly-connected-to-wunderground
 
 //Serial reading and parsing code based on code by JHaskell - http://jhaskellsblog.blogspot.com
 //
+
 
 
 //UdpNtpTime code modified from the Arduino tutorial written by Michael Margolis/Tom Igoe - http://arduino.cc/en/Tutorial/UdpNtpClient
